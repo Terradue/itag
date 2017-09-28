@@ -1,6 +1,6 @@
 # ws-itag semantic enhancement for Earth Observation data
 
-**ws-itag** is a web service for the semantic enhancement of Earth Observation products, i.e. the tagging of products with additional information about the covered area, regarding for example geology, water bodies, land use, population, countries, administrative units or names of major settlements. It is based on **iTag** whose original repository can be found in the [original iTag repository on GitHub](https://github.com/jjrom/itag).
+**ws-itag** is a web service for the semantic enhancement of Earth Observation products, i.e. the tagging of products with additional information about the covered area, regarding for example geology, water bodies, land use, population, countries, administrative units or names of major settlements. It is based on **iTag** whose original repository can be found [on GitHub](https://github.com/jjrom/itag).
 
 The description below should be sufficient for an installation on **CentOS 7** and the original instructions are only needed as reference.
 
@@ -67,7 +67,9 @@ host    all             postgres        localhost               trust
 ```
 Start the PostgreSQL server:
 
-```systemctl start postgresql-9.6```
+```
+systemctl start postgresql-9.6
+```
 
 # Data ingestion
 
@@ -122,7 +124,8 @@ wget http://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m
 unzip ne_10m_geography_marine_polys.zip
 [ $? -eq 0 ] && rm ne_10m_geography_marine_polys.zip
 ```
- Install the database schema by executing the following commands (gazetteer creation could take several hours):
+
+Install the database schema by executing the following commands (gazetteer creation could take several hours):
 ```bash
 $ITAG_HOME/_install/installDB.sh -F -H localhost -p itag
 $ITAG_HOME/_install/installDatasources.sh -F -H localhost -D $ITAG_DATA
@@ -159,7 +162,7 @@ $ITAG_HOME/_install/deploy.sh -s $ITAG_HOME -t $ITAG_TARGET
 ## Verification of successful installation
 
 In a web browser, open the following URL (replace _<itag-host>_ with the real hostname):
- [UUU](http://_*<itag-host>*_/itag/?taggers=Physical,Geology,Hydrology,LandCover2009,Political,Population,Toponyms&footprint=POLYGON((12.2%2042.0,%2012.8%2042.0,%2012.8%2041.7,%2012.2%2041.7,%2012.2%2042.0))&_pretty=true)
+ [http://<itag-host>/itag/?taggers=Physical,Geology,Hydrology,LandCover2009,Political,Population,Toponyms&footprint=POLYGON((12.2%2042.0,%2012.8%2042.0,%2012.8%2041.7,%2012.2%2041.7,%2012.2%2042.0))&_pretty=true](http://10.16.10.71/itag/?taggers=Physical,Geology,Hydrology,LandCover2009,Political,Population,Toponyms&footprint=POLYGON((12.2%2042.0,%2012.8%2042.0,%2012.8%2041.7,%2012.2%2041.7,%2012.2%2042.0))&_pretty=true)
 
 The result should be a JSON document with coverage information for the Rome area in the following nodes: **_physical_**, **_hydrology_**, **_geology_**, **_landcover_**, **_political_**, **_toponyms_**.
 
