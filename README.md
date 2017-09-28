@@ -142,7 +142,7 @@ $ITAG_HOME/_install/computeGlobCover2009.php -f GLOBCOVER_L4_200901_200912_V2.3.
 
 This is most likely faster than option A, even considering the transfer of the database dump file (5.2 GB).
 
-Copy the database dump file _itag-pgsql96-postgis23.dump_ and the corrective script _correct-itag-db.sh_ to the host. These files are currently on the VM *10.16.10.71* under _/home/sysadmin_.
+Copy the database dump file _itag-pgsql96-postgis23.dump_ and the corrective script _correct-itag-db.sh_ to the host. These files can be provided if requested.
 
 From the directory containing the transferred files, execute the following command:
 ```bash
@@ -166,7 +166,7 @@ In a web browser, open the following URL (replace _<itag-host>_ with the real ho
 
 The result should be a JSON document with coverage information for the Rome area in the following nodes: **_physical_**, **_hydrology_**, **_geology_**, **_landcover_**, **_political_**, **_toponyms_**.
 
-+Note+: _population_ information is not (yet) included, due to data unattainability.
+**Note:** _population_ information is not (yet) included, due to data unattainability.
 
 ## Cleanup
 
