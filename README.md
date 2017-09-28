@@ -1,205 +1,172 @@
-# iTag
+# ws-itag semantic enhancement for Earth Observation data
+
+**ws-itag** is a web service for the semantic enhancement of Earth Observation products, i.e. the tagging of products with additional information about the covered area, regarding for example geology, water bodies, land use, population, countries, administrative units or names of major settlements. It is based on **iTag** whose original repository can be found in the [original iTag repository on GitHub](https://github.com/jjrom/itag).
+
+The description below should be sufficient for an installation on **CentOS 7** and the original instructions are only needed as reference.
+
+# Installation on CentOS 7
+
+It is assumed that the instructions below are followed by an administrator logged in as the **_root_** user.
+
+## Preparation
+
+On a CentOS 7 host, make sure the following packages are installed (the commands below install them):
+
+* git
+* wget
+* unzip
+* httpd
+* php
+* postgresql96-server <sup>1</sup>
+* postgresql96-contrib<sup>1</sup>
+* php-pgsql
+* gdal<sup>1</sup>
+* gdal-python<sup>1</sup>
+* postgis23_96<sup>1</sup>
+* postgis23_96-client<sup>1</sup>
+
+<sup>1</sup>) from PostgresSQL 9.6 repository (_pgdg96_)
+```
+yum install -y git
+yum install -y wget
+yum install -y unzip
+yum install -y httpd
+yum install -y php
+yum install -y https://download.postgresql.org/pub/repos/yum/9.6/redhat/rhel-7-x86_64/pgdg-centos96-9.6-3.noarch.rpm
+yum install -y postgresql96-server
+yum install -y postgresql96-contrib
+yum install -y php-pgsql
+yum install -y epel-release
+yum install -y gdal
+yum install -y gdal-python
+yum install -y postgis23_96
+yum install -y postgis23_96-client
+```
+
+## Obtaining the iTag software
+
+Create a home directory for the installation files and clone the ws-itag GIT repository:
+
+```
+export ITAG_HOME=/usr/local/src/itag
+cd $ITAG_HOME
+git clone https://github.com/Terradue/ws-itag.git
+# or: git clone git@github.com:Terradue/ws-itag.git
+```
+
+## Database installation
+
+Create the database cluster. If the file system of the default location (_/var/lib/pgsql/data_) does not have sufficient space, specify a different location using the _-D_ option (in that case the directory must exist and be empty and owned by the _postgres_ user).
+```
+/usr/pgsql-9.6/bin/postgresql96-setup initd
+```
+Edit the _pg_hba.conf_ file in the (default location is _/var/lib/pgsql/9.6/data/pg_hba.conf_) inserting these two authentication rules before any other authentication line (temporary setting only):
+```
+local   all             postgres                                trust
+host    all             postgres        localhost               trust
+```
+Start the PostgreSQL server:
+
+```systemctl start postgresql-9.6```
+
+# Data ingestion
+
+There are two options to populate the database.
+
+**A:** Create the database from scratch and ingest the data from the downloaded data files. Since the ingestion involves a great amount of calculations, this can be very time-consuming.
+
+**B:** Use a database dump from a previously installed application instance.
+
+### Option A: Recompute from data sources
+
+Create a directory for data sources and make it the current directory:
+```
+export ITAG_DATA=$ITAG_HOME/data
+mkdir $ITAG_DATA
+cd $ITAG_DATA
+```
+Execute the following commands to download and uncompress the data sources:
+```
+wget http://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/physical/ne_10m_coastline.zip
+unzip ne_10m_coastline.zip
+[ $? -eq 0 ] && rm ne_10m_coastline.zip
+
+wget http://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/cultural/ne_10m_admin_0_countries.zip
+unzip ne_10m_admin_0_countries.zip
+[ $? -eq 0 ] && rm ne_10m_admin_0_countries.zip
+
+wget http://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/cultural/ne_10m_admin_1_states_provinces.zip
+unzip ne_10m_admin_1_states_provinces.zip
+[ $? -eq 0 ] && rm ne_10m_admin_1_states_provinces.zip
+
+wget http://download.geonames.org/export/dump/allCountries.zip
+wget http://download.geonames.org/export/dump/alternateNames.zip
+unzip allCountries.zip
+unzip alternateNames.zip
+[ $? -eq 0 ] && rm allCountries.zip
+[ $? -eq 0 ] && rm alternateNames.zip
 
-[![Code Climate](https://codeclimate.com/github/jjrom/itag/badges/gpa.svg)](https://codeclimate.com/github/jjrom/itag)
-[![Average time to resolve an issue](http://isitmaintained.com/badge/resolution/jjrom/itag.svg)](http://isitmaintained.com/project/jjrom/itag "Average time to resolve an issue")
-[![Percentage of issues still open](http://isitmaintained.com/badge/open/jjrom/itag.svg)](http://isitmaintained.com/project/jjrom/itag "Percentage of issues still open")
+wget http://www.colorado.edu/geography/foote/maps/assign/hotspots/download/hotspots.zip
+unzip hotspots.zip
+[ $? -eq 0 ] && rm hotspots.zip
 
-Semantic enhancement of Earth Observation data
+wget http://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/physical/ne_10m_glaciated_areas.zip
+unzip ne_10m_glaciated_areas.zip
+[ $? -eq 0 ] && rm ne_10m_glaciated_areas.zip
 
-iTag is a library to tag a footprint with the following information :
-* political informations (i.e continents/countries/regions/states)
-* geological information (i.e. faults/plates/glaciers/volcanoes)
-* hydrological information (i.e. rivers)
-* land cover (i.e. forest, water, urban, cultivated, herbaceous, desert, snow, flooded)
-* population count
+wget http://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/physical/ne_10m_rivers_lake_centerlines.zip
+unzip ne_10m_rivers_lake_centerlines.zip
+[ $? -eq 0 ] && rm ne_10m_rivers_lake_centerlines.zip
 
-You can access an online instance [here] (http://mapshup.com/projects/itag) as a web service.
+wget http://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/physical/ne_10m_geography_marine_polys.zip
+unzip ne_10m_geography_marine_polys.zip
+[ $? -eq 0 ] && rm ne_10m_geography_marine_polys.zip
+```
+ Install the database schema by executing the following commands (gazetteer creation could take several hours):
+```bash
+$ITAG_HOME/_install/installDB.sh -F -H localhost -p itag
+$ITAG_HOME/_install/installDatasources.sh -F -H localhost -D $ITAG_DATA
+$ITAG_HOME/_install/installGazetteerDB.sh -F -D $ITAG_DATA
+```
 
-See [video capture of itag applied to Pleiades HR and Spot5 images database] (http://vimeo.com/51045597) and access trough [mapshup] (http://mapshup.com/projects/mapshup)
+Download the ESA GlobCover 2009 data and install it (this could take several hours or even days, depending on the host performance):
+```bash
+wget http://due.esrin.esa.int/files/GLOBCOVER_L4_200901_200912_V2.3.color.tif
+$ITAG_HOME/_install/computeGlobCover2009.php -f GLOBCOVER_L4_200901_200912_V2.3.color.tif
+```
 
-iTag is used by [RESTo - REstful Semantic search Tool for geOspatial] (http://github.com/jjrom/resto)
+### Option B: Import existing database
 
-## Prerequesites
+This is most likely faster than option A, even considering the transfer of the database dump file (5.2 GB).
 
-* PHP (v5.3+) command line
-* PostgreSQL (v9.0+) with **unaccent** extension
-* PostGIS (v2.0+)
-* GDAL (v1.8+) with **python** support (for land cover preparation only)
+Copy the database dump file _itag-pgsql96-postgis23.dump_ and the corrective script _correct-itag-db.sh_ to the host. These files are currently on the VM *10.16.10.71* under _/home/sysadmin_.
 
-Note: iTag could work with lower version of the specified requirements.
-However there is no guaranty of success and unwanted result may occured !
+From the directory containing the transferred files, execute the following command:
+```bash
+pg_restore -U postgres -d itag itag-pgsql96-postgis23.dump{noformat}
+ Upon completion, run the corrective script to create the indexes whose creation will have failed during the installation:
+sh correct-itag-db.sh
+```
 
-## Installation
+## Deployment of the web application
 
-We suppose that :
+Since the web application uses _.htaccess_ files, there is no need for a specific configuration in the Apache configuration directory. It is enough to execute the deployment script:
+```
+ITAG_TARGET=/var/www/html/itag
+$ITAG_HOME/_install/deploy.sh -s $ITAG_HOME -t $ITAG_TARGET
+```
 
-* $ITAG_HOME is the directory containing this file
-* $ITAG_DATA is the directory containing the datasources file (see below)
+## Verification of successful installation
 
-### Get datasources
+In a web browser, open the following URL (replace _<itag-host>_ with the real hostname):
+ [UUU](http://_*<itag-host>*_/itag/?taggers=Physical,Geology,Hydrology,LandCover2009,Political,Population,Toponyms&footprint=POLYGON((12.2%2042.0,%2012.8%2042.0,%2012.8%2041.7,%2012.2%2041.7,%2012.2%2042.0))&_pretty=true)
 
-First create the $ITAG_DATA directory
+The result should be a JSON document with coverage information for the Rome area in the following nodes: **_physical_**, **_hydrology_**, **_geology_**, **_landcover_**, **_political_**, **_toponyms_**.
 
-    export ITAG_DATA=$ITAG_HOME/data
-    mkdir $ITAG_DATA
++Note+: _population_ information is not (yet) included, due to data unattainability.
 
-#### General data
+## Cleanup
 
-Retrieve coastlines from [Natural Earth](http://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-admin-0-countries/)
+Remove the previously added authentication rules in _pg_hba.conf_ (see above) and restart the PostgreSQL server.
 
-        cd $ITAG_DATA
-        wget http://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/physical/ne_10m_coastline.zip
-        unzip ne_10m_coastline.zip
-
-#### Political data
-
-Retrieve countries from [Natural Earth](http://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-admin-0-countries/)
-
-        cd $ITAG_DATA
-        wget http://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/cultural/ne_10m_admin_0_countries.zip
-        unzip ne_10m_admin_0_countries.zip
-
-Retrieve World Administrative Level 1 data from [Natural Earth](http://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-admin-1-states-provinces/)
-
-        cd $ITAG_DATA
-        wget http://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/cultural/ne_10m_admin_1_states_provinces.zip
-        unzip ne_10m_admin_1_states_provinces.zip
-
-Retrieve toponyms from [geonames](http://geonames.org)
-
-        cd $ITAG_DATA
-        wget http://download.geonames.org/export/dump/allCountries.zip
-        wget http://download.geonames.org/export/dump/alternateNames.zip
-        unzip allCountries.zip
-        unzip alternateNames.zip
-
-#### Geological data
-
-Retrieve geophysical data from [Mapping Tectonic Hot Spots](http://www.colorado.edu/geography/foote/maps/assign/hotspots/hotspots.html)
-
-        cd $ITAG_DATA
-        wget http://www.colorado.edu/geography/foote/maps/assign/hotspots/download/hotspots.zip
-        unzip hotspots.zip
-
-Retrieve glaciers from [Natural Earth](http://www.naturalearthdata.com/downloads/10m-physical-vectors/10m-glaciated-areas/)
-
-        cd $ITAG_DATA
-        wget http://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/physical/ne_10m_glaciated_areas.zip
-        unzip ne_10m_glaciated_areas.zip
-
-#### Hydrological data
-
-Retrieve rivers data from [Natural Earth](http://www.naturalearthdata.com/downloads/10m-physical-vectors/10m-rivers-lake-centerlines/)
-
-        cd $ITAG_DATA
-        wget http://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/physical/ne_10m_rivers_lake_centerlines.zip
-        unzip ne_10m_rivers_lake_centerlines.zip
-
-#### Other data (i.e. marine areas, mountains area, etc.)
-
-        # Marine areas
-        cd $ITAG_DATA
-        wget http://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/physical/ne_10m_geography_marine_polys.zip
-        unzip ne_10m_geography_marine_polys.zip
-
-### Install database
-
-        # Note : "password" must be the same as
-        # the value of 'password' parameter in $ITAG_HOME/include/config.php
-
-        $ITAG_HOME/_install/installDB.sh -F -d <path_to_postgis_directory> -p password
-
-### Populate database
-
-**Note** : If you are using Fedora, Red Hat Enterprise Linux, CentOS, scientific Linux, or one of the other
-distros that enable SELinux by default you should run the following commands as root :
-
-        setenforce 0
-
-Run the following commands
-
-        # General datasources
-        $ITAG_HOME/_install/installDatasources.sh -F -D $ITAG_DATA
-
-        # Gazetteer
-        $ITAG_HOME/_install/installGazetteerDB.sh -F -D $ITAG_DATA
-
-        # Wikipedia
-        # This step is optional and can only be performed if you have the geolocated wikipedia data (which probably you don't have :)
-        # In case of, these are the steps to follow in order to install this database within iTag
-        #
-        # Put the geolocated wikipedia data in $ITAG_DATA/wikipedia directory, then run the command
-        #
-        $ITAG_HOME/_install/installWikipediaDB.sh -D $ITAG_DATA/wikipedia
-
-### Install landcover database
-
-Install one of GlobCover2009 or GLC2000. GlobCover2009 is more recent and 300 meters resolution. GLC2000 is older and 1 kilometer resolution
-
-**Note** Process GlobCover2009 would take more time and take more disk space
-
-#### GLC2000
-Download the world glc2000 GeoTIFF file from ["Global Land Cover 2000" - global product](http://forobs.jrc.ec.europa.eu/products/glc2000/products.php)
-
-Then run the following :
-
-**Warning** : this PHP script gets postgres superuser password as command line argument, change password after iTag installation !
-
-        $ITAG_HOME/_install/computeLandCover.php -p postgres_user_pass -I path_to_glc2000_tif_image
-
-**Tip** : maybe you have to indicate the location of gdal tools (check -T and -P swich)
-
-**Note** : depending on your server performance, the landcover computation can take a long time (more than two hours)
-
-#### GlobCover2009
-Download the world GlobCover 2009 GeoTIFF file from ["European Space Agency GlobCover Portal"](http://due.esrin.esa.int/files/GLOBCOVER_L4_200901_200912_V2.3.color.tif)
-
-Then run the following :
-
-**Warning** : this PHP script gets postgres superuser password as command line argument, change password after iTag installation !
-
-        $ITAG_HOME/_install/computeGlobCover2009.php -p postgres_user_pass -f GLOBCOVER_L4_200901_200912_V2.3.color.tif
-
-### Install Gridded Population of the World database
-
-Download most recent "Population Count Grid Future" (or "Population Count Grid") product of the whole World from [SEDAC](http://sedac.ciesin.columbia.edu/data/set/gpw-v3-population-count-future-estimates/data-download) in ASCII Grid format (*.ascii or *.asc). All four resolutions (1°, 1/2°, 1/4° and 2.5′) are needed!
-
-Then run the following :
-
-**Attention** : this PHP script gets postgres superuser password as command line argument, change password after iTag installation !
-
-        $ITAG_HOME/_install/installGPW.php -p postgres_user_pass -f glp15ag60.asc
-        $ITAG_HOME/_install/installGPW.php -p postgres_user_pass -f glp15ag30.asc
-        $ITAG_HOME/_install/installGPW.php -p postgres_user_pass -f glp15ag15.asc
-        $ITAG_HOME/_install/installGPW.php -p postgres_user_pass -f glp15ag.asc
-
-**Note** : this take a loooooong time (more than four hours)
-
-### Deploy application
-
-        $ITAG_HOME/_install/deploy.sh -s $ITAG_HOME -t $ITAG_TARGET
-
-## Using iTag
-
-We suppose that $ITAG_TARGET is accessible to http://localhost/itag/ in Apache.
-
-To tag footprint on Toulouse with geological information and all cities with a pretty GeoJSON output, open this url within you browser
-
-        http://localhost/itag/?taggers=Political&_pretty=true&footprint=POLYGON((1.350360%2043.532822,1.350360%2043.668522,1.515350%2043.668522,1.515350%2043.532822,1.350360%2043.532822))
-
-Available parameters for Web service are :
-* &taggers=Political,Geology,Hydrology,Landcover
-* &pretty=true
-
-You can check this [running instance] (http://mapshup.com/projects/itag/)
-
-Examples :
-
-    Tag footprint on Toulouse with political and geological information and with a pretty GeoJSON output
-
-        http://mapshup.com/projects/itag/?taggers=Political,Geology&_pretty=true&footprint=POLYGON((1.350360%2043.532822,1.350360%2043.668522,1.515350%2043.668522,1.515350%2043.532822,1.350360%2043.532822))
-
-
-    Tag footprint intersecting France, Italy and Switzerland with political information. Hierarchical result as pretty GeoJSON output
-
-        http://mapshup.com/projects/itag/?taggers=Political&footprint=POLYGON((6.487426757812523%2045.76081241294796,6.487426757812523%2046.06798615804025,7.80578613281244%2046.06798615804025,7.80578613281244%2045.76081241294796,6.487426757812523%2045.76081241294796))
+Remove the content of _\$ITAG_HOME/data_ (optionally also the entire _\$ITAG_HOME_ directory) and/or the database dump file.
