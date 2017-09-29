@@ -138,6 +138,26 @@ wget http://due.esrin.esa.int/files/GLOBCOVER_L4_200901_200912_V2.3.color.tif
 $ITAG_HOME/_install/computeGlobCover2009.php -f GLOBCOVER_L4_200901_200912_V2.3.color.tif
 ```
 
+Download the population data from [Socioeconomic Data and Applications Center (SEDAC)](http://sedac.ciesin.columbia.edu/data/set/gpw-v3-population-count-future-estimates/data-download) (Columbia University). Download all four resolutions (1°, ½°, ¼° and 2.5') in ASCII Grid format. A login is necessary for this, this is why there is no command for this download. The web interface is buggy, you have to refresh the page after each download, otherwise the latest data (from 2015 at the moment) is not selectable. Data availability might change, and file names will change consequently.
+
+Copy the files under the cd $ITAG_DATA directory and then unzip and install the data (adjust the file names if necessary).
+
+```
+cd $ITAG_DATA
+unzip gl_gpwfe_pcount_15_ascii_25.zip
+unzip gl_gpwv3_pcount_15_ascii_half.zip
+unzip gl_gpwv3_pcount_15_ascii_one.zip
+unzip gl_gpwv3_pcount_15_ascii_quar.zip
+
+$ITAG_HOME/_install/installGPW.php -p itag -f glp15ag60.asc
+$ITAG_HOME/_install/installGPW.php -p itag -f glp15ag30.asc
+$ITAG_HOME/_install/installGPW.php -p itag -f glp15ag15.asc
+$ITAG_HOME/_install/installGPW.php -p itag -f glp15ag.asc
+
+```
+
+Note that the ingestion of the population data creates a large amount of data; especially the last step (the 2.5' resolution data) can take several hours.
+
 ### Option B: Import existing database
 
 This is most likely faster than option A, even considering the transfer of the database dump file (5.2 GB).
@@ -168,9 +188,7 @@ $ITAG_HOME/_install/deploy.sh -s $ITAG_HOME -t $ITAG_TARGET
 In a web browser, open the following URL (replace _<itag-host>_ with the real hostname):
  [http://<itag-host>/itag/?taggers=Physical,Geology,Hydrology,LandCover2009,Political,Population,Toponyms&footprint=POLYGON((12.2%2042.0,%2012.8%2042.0,%2012.8%2041.7,%2012.2%2041.7,%2012.2%2042.0))&_pretty=true](http://10.16.10.71/itag/?taggers=Physical,Geology,Hydrology,LandCover2009,Political,Population,Toponyms&footprint=POLYGON((12.2%2042.0,%2012.8%2042.0,%2012.8%2041.7,%2012.2%2041.7,%2012.2%2042.0))&_pretty=true)
 
-The result should be a JSON document with coverage information for the Rome area in the following nodes: **_physical_**, **_hydrology_**, **_geology_**, **_landcover_**, **_political_**, **_toponyms_**.
-
-**Note:** _population_ information is not (yet) included, due to data unattainability.
+The result should be a JSON document with coverage information for the Rome area in the following nodes: **_physical_**, **_hydrology_**, **_geology_**, **_landcover_**, **_political_**, **_population_**, **_toponyms_**.
 
 ## Cleanup
 
