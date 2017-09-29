@@ -146,7 +146,8 @@ Copy the database dump file _itag-pgsql96-postgis23.dump_ and the corrective scr
 
 From the directory containing the transferred files, execute the following command:
 ```
-pg_restore -U postgres -d itag itag-pgsql96-postgis23.dump```
+pg_restore -U postgres -d itag itag-pgsql96-postgis23.dump
+```
 
 Upon completion, run the corrective script to create the indexes whose creation will have failed during the installation:
 
