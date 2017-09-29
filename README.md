@@ -144,16 +144,15 @@ Copy the files under the cd $ITAG_DATA directory and then unzip and install the 
 
 ```
 cd $ITAG_DATA
-unzip gl_gpwfe_pcount_15_ascii_25.zip
-unzip gl_gpwv3_pcount_15_ascii_half.zip
 unzip gl_gpwv3_pcount_15_ascii_one.zip
+unzip gl_gpwv3_pcount_15_ascii_half.zip
 unzip gl_gpwv3_pcount_15_ascii_quar.zip
+unzip gl_gpwfe_pcount_15_ascii_25.zip
 
 $ITAG_HOME/_install/installGPW.php -p itag -f glp15ag60.asc
 $ITAG_HOME/_install/installGPW.php -p itag -f glp15ag30.asc
 $ITAG_HOME/_install/installGPW.php -p itag -f glp15ag15.asc
 $ITAG_HOME/_install/installGPW.php -p itag -f glp15ag.asc
-
 ```
 
 Note that the ingestion of the population data creates a large amount of data; especially the last step (the 2.5' resolution data) can take several hours.
