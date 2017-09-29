@@ -126,14 +126,14 @@ unzip ne_10m_geography_marine_polys.zip
 ```
 
 Install the database schema by executing the following commands (gazetteer creation could take several hours):
-```bash
+```
 $ITAG_HOME/_install/installDB.sh -F -H localhost -p itag
 $ITAG_HOME/_install/installDatasources.sh -F -H localhost -D $ITAG_DATA
 $ITAG_HOME/_install/installGazetteerDB.sh -F -D $ITAG_DATA
 ```
 
 Download the ESA GlobCover 2009 data and install it (this could take several hours or even days, depending on the host performance):
-```bash
+```
 wget http://due.esrin.esa.int/files/GLOBCOVER_L4_200901_200912_V2.3.color.tif
 $ITAG_HOME/_install/computeGlobCover2009.php -f GLOBCOVER_L4_200901_200912_V2.3.color.tif
 ```
@@ -145,9 +145,12 @@ This is most likely faster than option A, even considering the transfer of the d
 Copy the database dump file _itag-pgsql96-postgis23.dump_ and the corrective script _correct-itag-db.sh_ to the host. These files can be provided if requested.
 
 From the directory containing the transferred files, execute the following command:
-```bash
-pg_restore -U postgres -d itag itag-pgsql96-postgis23.dump{noformat}
- Upon completion, run the corrective script to create the indexes whose creation will have failed during the installation:
+```
+pg_restore -U postgres -d itag itag-pgsql96-postgis23.dump```
+
+Upon completion, run the corrective script to create the indexes whose creation will have failed during the installation:
+
+```
 sh correct-itag-db.sh
 ```
 
