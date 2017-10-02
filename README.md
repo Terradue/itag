@@ -59,17 +59,22 @@ git clone https://github.com/Terradue/ws-itag.git
 Create the database cluster. If the file system of the default location (_/var/lib/pgsql/data_) does not have sufficient space, specify a different location using the _-D_ option (in that case the directory must exist and be empty and owned by the _postgres_ user).
 ```
 /usr/pgsql-9.6/bin/postgresql96-setup initd
+
 ```
-Edit the _pg_hba.conf_ file in the (default location is _/var/lib/pgsql/9.6/data/pg_hba.conf_) inserting these two authentication rules before any other authentication line (temporary setting only):
+Edit the _pg_hba.conf_ file in the (default location is _/var/lib/pgsql/9.6/data/pg_hba.conf_) inserting these three authentication rules before any other authentication line (the first two are temporary settings only):
 ```
 local   all             postgres                                trust
 host    all             postgres        localhost               trust
+local   itag            itag                                    md5
 ```
+
 Start the PostgreSQL server:
 
 ```
 systemctl start postgresql-9.6
 ```
+
+
 
 # Data ingestion
 
@@ -191,6 +196,6 @@ The result should be a JSON document with coverage information for the Rome area
 
 ## Cleanup
 
-Remove the previously added authentication rules in _pg_hba.conf_ (see above) and restart the PostgreSQL server.
+Remove the previously added authentication rules in _pg_hba.conf_ (only those regarding the _postgres_ role, see above) and restart the PostgreSQL server.
 
 Remove the content of _\$ITAG_HOME/data_ (optionally also the entire _\$ITAG_HOME_ directory) and/or the database dump file.
